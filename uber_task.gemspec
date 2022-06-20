@@ -1,37 +1,33 @@
 # frozen_string_literal: true
 
-require_relative "lib/uber_task/version"
+require 'rake'
+require_relative 'lib/uber_task'
 
-Gem::Specification.new do |spec|
-  spec.name = "uber_task"
-  spec.version = UberTask::VERSION
-  spec.authors = ["Justin Gordon"]
-  spec.email = ["justin@shakacode.com"]
+Gem::Specification.new do |s|
+  s.name = 'uber_task'
+  s.version = UberTask::VERSION
+  s.authors = [
+    'Alexandre Borela',
+    'Justin Gordon',
+  ]
+  s.email = [
+    'alexandre@shakacode.com',
+    'justin@shakacode.com',
+  ]
+  s.summary = 'Sequential task management'
+  s.description = <<~DESC.strip
+    Run tasks in a structured way with support for retry and progress report.
+  DESC
+  s.homepage = 'https://github.com/shakacode/uber_task'
+  s.license = 'MIT'
+  s.required_ruby_version = '>= 2.7.5'
+  s.metadata['homepage_uri'] = s.homepage
+  s.metadata['source_code_uri'] = 'https://github.com/shakacode/uber_task'
+  s.metadata['changelog_uri'] = <<~LINK.strip
+    https://github.com/shakacode/uber_task/blob/main/CHANGELOG.md
+  LINK
+  s.metadata['rubygems_mfa_required'] = 'true'
 
-  spec.summary = "Running tasks"
-  spec.description = "Longer description or delete this line."
-  spec.homepage = "https://github.com/shakacode/uber_task"
-  spec.license = "MIT"
-  spec.required_ruby_version = ">= 2.6.0"
-
-  spec.metadata["homepage_uri"] = spec.homepage
-  spec.metadata["source_code_uri"] = "https://github.com/shakacode/uber_task"
-  spec.metadata["changelog_uri"] = "https://github.com/shakacode/uber_task/blob/main/CHANGELOG.md"
-
-  # Specify which files should be added to the gem when it is released.
-  # The `git ls-files -z` loads the files in the RubyGem that have been added into git.
-  spec.files = Dir.chdir(File.expand_path(__dir__)) do
-    `git ls-files -z`.split("\x0").reject do |f|
-      (f == __FILE__) || f.match(%r{\A(?:(?:bin|test|spec|features)/|\.(?:git|travis|circleci)|appveyor)})
-    end
-  end
-  spec.bindir = "exe"
-  spec.executables = spec.files.grep(%r{\Aexe/}) { |f| File.basename(f) }
-  spec.require_paths = ["lib"]
-
-  # Uncomment to register a new dependency of your gem
-  # spec.add_dependency "example-gem", "~> 1.0"
-
-  # For more information and examples about making a new gem, check out our
-  # guide at: https://bundler.io/guides/creating_gem.html
+  s.require_paths = ['lib']
+  s.files = FileList.new(['lib/**/*.rb']).to_a
 end
