@@ -6,7 +6,7 @@ module UberTask
   class SkipTask < Exception # rubocop:disable Lint/InheritException
     attr_accessor :reason
 
-    def initialize(reason = nil)
+    def initialize(reason: nil)
       super('Requested to skip the task.')
       @reason = reason
     end

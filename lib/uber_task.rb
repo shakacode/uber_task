@@ -104,6 +104,6 @@ module UberTask
     if block_given?
       reason ||= yield
     end
-    raise SkipTask, reason
+    raise SkipTask.new(reason: reason)
   end
 end
