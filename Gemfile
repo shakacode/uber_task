@@ -2,10 +2,14 @@
 
 source 'https://rubygems.org'
 
-ruby '2.7.5'
+group :development do
+  gem 'rake', '~> 13.0'
+end
 
-gem 'rake', '~> 13.0'
-gem 'rspec', '~> 3.2'
-gem 'rubocop', '~> 1.21'
+group :test do
+  gem 'rspec', '~> 3.2'
+  gem 'rubocop', '~> 1.21'
+  gem 'simplecov', '~> 0.21'
+end
 
 gemspec

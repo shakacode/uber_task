@@ -5,7 +5,6 @@ if !$LOAD_PATH.include?(LIB_DIR)
   $LOAD_PATH.unshift(LIB_DIR)
 end
 
-require 'rake'
 require 'uber_task/version'
 
 Gem::Specification.new do |s|
@@ -34,5 +33,5 @@ Gem::Specification.new do |s|
   s.metadata['rubygems_mfa_required'] = 'true'
 
   s.require_paths = ['lib']
-  s.files = FileList.new(['lib/**/*.rb']).to_a
+  s.files = Dir['lib/**/*', 'LICENSE', 'README.md']
 end
