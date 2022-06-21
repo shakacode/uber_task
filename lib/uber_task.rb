@@ -1,17 +1,16 @@
 # frozen_string_literal: true
 
-require_relative 'uber_task/error'
-require_relative 'uber_task/event'
-require_relative 'uber_task/event_handled'
-require_relative 'uber_task/location'
-require_relative 'uber_task/retry_info'
-require_relative 'uber_task/retry_task'
-require_relative 'uber_task/skip_task'
-require_relative 'uber_task/task_context'
+require 'uber_task/error'
+require 'uber_task/event'
+require 'uber_task/event_handled'
+require 'uber_task/location'
+require 'uber_task/retry_info'
+require 'uber_task/retry_task'
+require 'uber_task/skip_task'
+require 'uber_task/task_context'
+require 'uber_task/version'
 
 module UberTask
-  VERSION = '0.1.0'
-
   def self.current
     Thread.current[:__uber_task_stack__] ||= []
     Thread.current[:__uber_task_stack__].last
