@@ -22,7 +22,7 @@ module UberTask
 
   def self.on_retry(
     report: true,
-    wait: 0.seconds,
+    wait: 0,
     &block
   )
     context = UberTask.current
@@ -50,7 +50,7 @@ module UberTask
     UberTask.current.report(level, &block)
   end
 
-  def self.retry(reason: nil, wait: 0.seconds)
+  def self.retry(reason: nil, wait: 0)
     if block_given?
       reason ||= yield
     end
