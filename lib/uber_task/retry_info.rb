@@ -34,7 +34,7 @@ module UberTask
 
       if wait.positive?
         <<~MSG.strip
-          Retrying in #{wait} seconds. (#{retries_remaining} retries remaining)
+          Retrying in #{wait} seconds... (#{retries_remaining} retries remaining)
         MSG
       else
         <<~MSG.strip
