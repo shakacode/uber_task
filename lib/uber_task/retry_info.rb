@@ -11,15 +11,15 @@ module UberTask
                 :retries
 
     def initialize(
-      default_retries:,
-      default_retry_wait:,
-      retries:
+      default_retries: nil,
+      default_retry_wait: nil,
+      retries: nil
     )
-      @default_retries = default_retries
-      @default_retry_wait = default_retry_wait
+      @default_retries = default_retries || 0
+      @default_retry_wait = default_retry_wait || 0
       @report = true
-      @retries = retries
-      @retries_remaining = retries
+      @retries = retries || 0
+      @retries_remaining = retries || 0
       @wait = 0
     end
 
