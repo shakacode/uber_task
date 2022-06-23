@@ -5,11 +5,9 @@ if !$LOAD_PATH.include?(LIB_DIR)
   $LOAD_PATH.unshift(LIB_DIR)
 end
 
-require 'uber_task/version'
-
 Gem::Specification.new do |s|
   s.name = 'uber_task'
-  s.version = UberTask::VERSION
+  s.version = '0.1.0'
   s.authors = [
     'Alexandre Borela',
     'Justin Gordon',

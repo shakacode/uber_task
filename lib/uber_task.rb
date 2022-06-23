@@ -9,7 +9,6 @@ require 'uber_task/retry_info'
 require 'uber_task/retry_task'
 require 'uber_task/skip_task'
 require 'uber_task/task_context'
-require 'uber_task/version'
 
 module UberTask
   def self.current
