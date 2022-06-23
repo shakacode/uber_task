@@ -15,8 +15,6 @@ describe UberTask::Location do
     expect(location.line).to eq(42)
   end
 
-  it
-
   describe '#to_s' do
     it 'returns the path and line as string' do
       expect(location.to_s).to eq('some/path:42')
