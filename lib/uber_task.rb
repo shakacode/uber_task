@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 
+require 'uber_task/internal/path'
 require 'uber_task/error'
 require 'uber_task/event'
 require 'uber_task/event_handled'
