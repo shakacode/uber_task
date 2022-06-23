@@ -95,13 +95,13 @@ module UberTask
       thread = Thread.current
       thread[:__uber_task_stack__] ||= []
       thread[:__uber_task_stack__].push(self)
-      Rails.logger.debug { enter_message }
+      Internal.trace { enter_message }
     end
 
     def exit_task
       thread = Thread.current
       thread[:__uber_task_stack__].pop
-      Rails.logger.debug { exit_message }
+      Internal.trace { exit_message }
     end
 
     def execute_handler(key, *args)
@@ -184,8 +184,8 @@ module UberTask
 
         execute_handler(:retry, err.reason)
 
-        Rails.logger.debug { exit_message }
-        Rails.logger.debug { enter_message }
+        Internal.trace { exit_message }
+        Internal.trace { enter_message }
 
         return true
       end

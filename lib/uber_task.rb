@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 
+require 'uber_task/internal'
 require 'uber_task/internal/path'
 require 'uber_task/error'
 require 'uber_task/event'
@@ -14,6 +15,14 @@ module UberTask
   def self.current
     Thread.current[:__uber_task_stack__] ||= []
     Thread.current[:__uber_task_stack__].last
+  end
+
+  def self.disable_tracing
+    Thread.current[:__uber_task_trace__] = false
+  end
+
+  def self.enable_tracing
+    Thread.current[:__uber_task_trace__] = true
   end
 
   def self.on_report(&block)
