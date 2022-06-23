@@ -16,7 +16,7 @@ module UberTask
     def initialize(
       name:,
       retry_info:,
-      vital:,
+      vital: true,
       &block
     )
       @body = block
