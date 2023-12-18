@@ -6,6 +6,7 @@ SimpleCov.start do
 end
 
 require 'uber_task'
+require 'colorize'
 
 RSpec.configure do |config|
   config.expect_with :rspec do |c|
