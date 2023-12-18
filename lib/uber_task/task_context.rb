@@ -128,7 +128,7 @@ module UberTask
     end
 
     def full_name
-      result = @scope.to_s.purple + ".#{@method}".cyan
+      result = @scope.to_s.magenta + ".#{@method}".cyan
       result += " #{@name.to_s.white}" unless @name.nil?
       result
     end
