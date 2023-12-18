@@ -7,7 +7,6 @@ end
 
 require 'uber_task'
 require 'colorize'
-require 'colorized_string'
 
 RSpec.configure do |config|
   config.expect_with :rspec do |c|
