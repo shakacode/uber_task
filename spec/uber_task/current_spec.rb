@@ -21,7 +21,12 @@ describe UberTask do
               expect(described_class.current).not_to eq(task2)
               expect(described_class.current).to eq(task3)
             end
+
+            expect(described_class.current).not_to eq(task1)
+            expect(described_class.current).not_to eq(task2)
           end
+
+          expect(described_class.current).not_to eq(task1)
         end
       end
     end
