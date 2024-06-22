@@ -137,8 +137,7 @@ module UberTask
       @parent.nil? ? 0 : @parent.level + 1
     end
 
-    def report(level = Logger::INFO)
-      return if Rails.logger.level > level
+    def report(level = ::Logger::INFO)
       message = yield
       execute_handler_chain(self, :report, message, level)
     end

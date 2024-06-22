@@ -1,5 +1,5 @@
 # frozen_string_literal: true
-
+require 'logger'
 require 'uber_task/internal'
 require 'uber_task/internal/path'
 require 'uber_task/error'
