@@ -4,7 +4,7 @@ describe UberTask do
 
     UberTask.run do
       UberTask.skip
-      ask_skipped = false
+      task_skipped = false
     end
 
     expect(task_skipped).to be(true)
