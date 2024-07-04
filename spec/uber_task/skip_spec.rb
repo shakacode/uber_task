@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 describe UberTask do
   it 'skips the task' do
     task_skipped = true

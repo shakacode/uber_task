@@ -3,10 +3,10 @@
 module UberTask
   module Internal
     def self.trace
-      if Thread.current[:__uber_task_trace__]
-        message = yield
-        puts message
-      end
+      return unless Thread.current[:__uber_task_trace__]
+
+      message = yield
+      puts message
     end
   end
 end

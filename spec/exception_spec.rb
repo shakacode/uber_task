@@ -1,9 +1,11 @@
+# frozen_string_literal: true
+
 describe UberTask do
   it 'Retries the child task after two exceptions' do
     task_retried_after_exception = 0
 
     UberTask.run do
-      UberTask.on_subtask_error do |task, event, err|
+      UberTask.on_subtask_error do |_task, _event, err|
         if err.message == 'Some error'
           task_retried_after_exception += 1
           UberTask.retry(reason: err, wait: 1)
@@ -16,7 +18,6 @@ describe UberTask do
         end
       end
     end
-
 
     expect(task_retried_after_exception).to be(2)
   end
