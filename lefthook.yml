@@ -1,0 +1,12 @@
+pre-push:
+  commands:
+    rubocop: &rubocop
+      files: git diff --name-only --diff-filter=d $(git merge-base origin/main HEAD)..HEAD
+      glob: "*.{rb,rake}"
+      run: bundle exec rubocop --parallel --force-exclusion {files}
+
+pre-commit:
+  commands:
+    rubocop:
+      <<: *rubocop
+      files: git diff --name-only --diff-filter=d HEAD
