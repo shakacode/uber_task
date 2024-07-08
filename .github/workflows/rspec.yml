@@ -1,0 +1,32 @@
+name: RSpec
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+
+jobs:
+  rspec:
+    runs-on: ubuntu-latest
+    name: RSpec
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Set up Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: "3.2"
+          bundler-cache: true
+      - name: Install dependencies
+        run: bundle install
+      - name: Run tests
+        env:
+          RAILS_ENV: test
+        run: bundle exec rspec --format documentation
+      - name: Upload coverage results
+        uses: actions/upload-artifact@master
+        if: always()
+        with:
+          name: coverage-report-${{ github.run_id }}-ubuntu-latest-ruby-3.2
+          path: coverage
