@@ -35,10 +35,10 @@ describe UberTask::Internal do
         UberTask.enable_tracing
       end
 
-      it 'sends the trace message to puts' do
-        expect do
-          described_class.trace { 'some message' }
-        end.to output("some message\n").to_stdout
+      it 'logs the trace message via logger\'s debug level' do
+        expect(UberTask.logger).to receive(:debug).with('some message')
+
+        described_class.trace { 'some message' }
       end
     end
   end
