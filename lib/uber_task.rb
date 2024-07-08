@@ -13,6 +13,19 @@ require 'uber_task/skip_task'
 require 'uber_task/task_context'
 
 module UberTask
+  class << self
+    attr_writer :logger
+
+    def logger
+      @logger ||=
+        if defined?(Rails.logger)
+          Rails.logger
+        else
+          Logger.new($stdout, progname: name)
+        end
+    end
+  end
+
   def self.current
     Thread.current[:__uber_task_stack__] ||= []
     Thread.current[:__uber_task_stack__].last

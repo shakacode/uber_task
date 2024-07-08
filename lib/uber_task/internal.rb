@@ -5,8 +5,7 @@ module UberTask
     def self.trace
       return unless Thread.current[:__uber_task_trace__]
 
-      message = yield
-      puts message
+      UberTask.logger.debug yield
     end
   end
 end
