@@ -25,18 +25,13 @@ describe UberTask::Internal::Path do
       end
     end
 
-    context 'in rails' do
-      let(:rails_root) { Pathname.new(Dir.pwd) }
+    context 'on rails', :on_rails do
       let(:paths) do
         [
-          rails_root.join('abc').to_s,
+          Rails.root.join('abc').to_s,
           '/foo/bar/baz/gems/bar',
           '/foo/bar/rubygems/baz',
         ]
-      end
-
-      before do
-        stub_const('Rails', double(root: rails_root))
       end
 
       it 'shortens paths' do

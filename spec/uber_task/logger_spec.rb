@@ -21,6 +21,14 @@ describe UberTask do
         end.to output(/some message/).to_stdout
       end
     end
+
+    context 'when Rails logger is defined', :on_rails do
+      it 'uses Rails logger by default' do
+        expect(Rails.logger).to receive(:info).with('some message')
+
+        described_class.logger.info('some message')
+      end
+    end
   end
 
   describe '.logger=' do
