@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require 'colorize'
+
 module UberTask
   class TaskContext
     attr_reader :body,

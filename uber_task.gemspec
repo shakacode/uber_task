@@ -32,4 +32,6 @@ Gem::Specification.new do |s|
 
   s.require_paths = ['lib']
   s.files = Dir['lib/**/*', 'LICENSE', 'README.md']
+
+  s.add_dependency('colorize', '~> 1.1.0')
 end
