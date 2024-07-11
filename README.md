@@ -52,7 +52,7 @@ parent function.
 ```ruby
 def create_build_and_test
   UberTask.run(
-    name: "Build and Test"
+    "Build and Test"
     default_retry_count: 1,
     default_retry_wait: 5.mins,
     retry_count: 1
@@ -73,7 +73,7 @@ On calling the `.run` method of UberTask inside this function, we add this funct
 
 #### parameters
 
-1. name:
+1. name -
    Default value is nil. Set the value of this parameter which
    signifies what the function does.
 
@@ -107,7 +107,7 @@ We need to call this inside the `UberTask#run` method. This event is triggered w
 ```ruby
 def install_ruby
   UberTask.run(
-    name: "Install Ruby"
+    "Install Ruby"
     retry_count: 2
   ) do
 
@@ -190,6 +190,14 @@ TODO: need to come up with an appropriate example.
 
 1. block:
    Pass a Ruby block that contains the code to be executed.
+
+## Examples
+
+You can run some examples at `examples/` folder:
+
+```
+ruby examples/download_and_move_file.rb
+```
 
 ## License
 
