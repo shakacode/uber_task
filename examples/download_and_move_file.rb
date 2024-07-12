@@ -2,41 +2,61 @@
 
 require 'uber_task'
 require 'colorize'
+require 'tmpdir'
 
 require_relative 'download_file'
 require_relative 'move_file'
+require_relative 'failing_task'
+
+EXISTENT_FILE_URI = 'https://github.com/shakacode/uber_task/raw/main/README.md'
+NON_EXESTENT_FILE_URI = 'https://github.com/shakacode/uber_task/raw/main/NON_EXISTENT.md'
+NON_VITAL_FILE_URI = 'https://github.com/shakacode/uber_task/raw/main/NON_VITAL.md'
 
 module Examples
   class DownloadAndMoveFile
-    def self.run(source:, download_path:, move_path:)
-      UberTask.run('Download and move file', retry_count: 2) do
+    def self.run(uri:, download_path:, move_path:)
+      UberTask.run('Download and move file') do
         UberTask.on_success do
           UberTask.logger.info(
             'Top-level task was completed successfully!'.green,
           )
         end
 
-        UberTask.on_subtask_error do
-          UberTask.logger.info(
-            'Unexpected subtask error can be caught on top-level task ' \
-            'and an early return can be made, ' \
-            'isn\'t that cool!?'.underline,
-          )
-          return # Try to remove this line and see what happens!
+        UberTask.on_subtask_error do |_task, event, err|
+          case err
+          # Network errors occuring in subtasks are handled here in top-level
+          when OpenURI::HTTPError
+            UberTask.retry(reason: err, wait: 5)
+          # Subtasks can be skipped
+          when Examples::FailingTask::Error
+            UberTask.logger.info(
+              'Encountered expected error, skipping...'.yellow,
+            )
+
+            UberTask.skip
+          else
+            UberTask.logger.error(
+              "Encountered unexpected error - #{err.message}".red,
+            )
+            event.handled
+          end
         end
 
-        # Notice that we are passing `vital: true` option so that
-        # an early return can be made if task fails
-        begin
-          Examples::DownloadFile.run(
-            source: source,
-            to: download_path,
-            vital: true,
-          )
-        rescue StandardError => err
-          UberTask.logger.info "Failed to download file -- #{err.message}"
-          return
-        end
+        Examples::DownloadFile.run(
+          uri: NON_VITAL_FILE_URI,
+          to: download_path,
+          retry_count: 1,
+          vital: false, # execution won't stop when this task fails
+        )
+
+        Examples::FailingTask.run
+
+        Examples::DownloadFile.run(
+          uri: uri,
+          to: download_path,
+          retry_count: 3,
+          vital: true, # execution will stop if this task fails
+        )
 
         Examples::MoveFile.run(from: download_path, to: move_path)
       end
@@ -46,35 +66,21 @@ end
 
 if __FILE__ == $PROGRAM_NAME
   Dir.mktmpdir do |dir|
-    download_path = File.join(dir, 'test')
-    move_path = File.join(dir, 'new_path')
+    download_path = File.join(dir, 'download_path')
+    move_path = File.join(dir, 'move_path')
 
     puts '--- Running successfull case ---'
     Examples::DownloadAndMoveFile.run(
-      source: VALID_FILE_URI,
+      uri: EXISTENT_FILE_URI,
       download_path: download_path,
       move_path: move_path,
     )
 
     puts "\n--- Running case which fails to download file ---\n"
     Examples::DownloadAndMoveFile.run(
-      source: NON_EXESTENT_FILE_URI,
+      uri: NON_EXESTENT_FILE_URI,
       download_path: download_path,
       move_path: move_path,
-    )
-
-    puts "\n--- Running case with invalid download path ---\n"
-    Examples::DownloadAndMoveFile.run(
-      source: VALID_FILE_URI,
-      download_path: '/invalid_path',
-      move_path: move_path,
-    )
-
-    puts "\n--- Running case with invalid move path ---\n"
-    Examples::DownloadAndMoveFile.run(
-      source: VALID_FILE_URI,
-      download_path: download_path,
-      move_path: '/invalid_path',
     )
   end
 end

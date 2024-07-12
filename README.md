@@ -193,8 +193,7 @@ TODO: need to come up with an appropriate example.
 
 ## Examples
 
-You can run some examples at `examples/` folder:
-
+You can find examples of gem usage at `examples/` folder:
 ```
 ruby examples/download_and_move_file.rb
 ```
