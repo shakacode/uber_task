@@ -52,7 +52,7 @@ parent function.
 ```ruby
 def create_build_and_test
   UberTask.run(
-    "Build and Test"
+    'Build and Test',
     default_retry_count: 1,
     default_retry_wait: 5.mins,
     retry_count: 1
@@ -106,11 +106,7 @@ We need to call this inside the `UberTask#run` method. This event is triggered w
 
 ```ruby
 def install_ruby
-  UberTask.run(
-    "Install Ruby"
-    retry_count: 2
-  ) do
-
+  UberTask.run('Install Ruby', retry_count: 2) do
     UberTask.on_success do
       # code to send a Slack notification
       send_ruby_installed_notification
@@ -143,9 +139,27 @@ the code inside the `on_success` block gets executed.
 
 This is similar to the `on_success` event.
 
-We need to call this inside the `UberTask#run` method.
+We need to call this inside the `UberTask#run` method. This event is triggered when the current task reports something.
 
-TODO: need to come up with an appropriate example.
+```ruby
+def install_ruby
+  UberTask.run('Install Ruby', retry_count: 2) do
+    UberTask.on_report do
+      puts 'This message appears when task reports something'
+    end
+
+    UberTask.report do
+      puts 'Starting ruby installation'
+    end
+
+    process_ruby_version_and_install_ruby
+
+    UberTask.report do
+      puts 'Finished ruby installation'
+    end
+  end
+end
+```
 
 #### parameters
 
@@ -156,9 +170,23 @@ TODO: need to come up with an appropriate example.
 
 This is similar to the `on_success` event.
 
-We need to call this inside the `UberTask#run` method.
+We need to call this inside the `UberTask#run` method. This event is triggered when the current task gets skipped.
 
-TODO: need to come up with an appropriate example.
+```ruby
+def install_ruby
+  UberTask.run('Install Ruby', retry_count: 2) do
+    UberTask.on_skip do
+      puts 'Ruby installation was skipped'
+    end
+
+    if ruby_already_installed?
+      UberTask.skip('Ruby is already installed')
+    else
+      process_ruby_version_and_install_ruby
+    end
+  end
+end
+```
 
 #### parameters
 
@@ -169,9 +197,33 @@ TODO: need to come up with an appropriate example.
 
 This is similar to the `on_success` event.
 
-We need to call this inside the `UberTask#run` method.
+We need to call this inside the `UberTask#run` method. This event is triggered when the subtask raises an error.
 
-TODO: need to come up with an appropriate example.
+```ruby
+def install_ruby_from_source
+  UberTask.run('Install Ruby from source', retry_count: 2) do
+    UberTask.on_subtask_error do |_task, event, err|
+      if network_error?(err)
+        puts 'Encountered network error, retrying...'
+        UberTask.retry(reason: err, wait: 3)
+      else
+        puts "Encountered unexpected error - #{err.message}"
+        event.handled
+      end
+    end
+
+    ### Subtask 1 -- network error can occur
+    UberTask.run('Download ruby archieve', retry_count: 3) do
+      download_ruby_archieve
+    end
+
+    ### Subtask 2 -- compilation can fail
+    UberTask.run('Compile ruby') do
+      compile_ruby
+    end
+  end
+end
+```
 
 #### parameters
 
@@ -182,9 +234,20 @@ TODO: need to come up with an appropriate example.
 
 This is similar to the `on_success` event.
 
-We need to call this inside the `UberTask#run` method.
+We need to call this inside the `UberTask#run` method. This event is triggered when the current task is retried.
 
-TODO: need to come up with an appropriate example.
+```ruby
+def install_ruby
+  UberTask.run('Install Ruby', retry_count: 2) do
+    UberTask.on_retry do
+      puts 'Retrying to install ruby...'
+    end
+
+    result = process_ruby_version_and_install_ruby
+    UberTask.retry(reason: result.message) if result.error?
+  end
+end
+```
 
 #### parameters
 
