@@ -2,17 +2,34 @@
 
 describe UberTask do
   describe '.run' do
-    it 'retries the task' do
-      run_count = 0
+    context 'when task succeeds' do
+      it 'it triggers .on_success hook' do
+        on_success_called = false
 
-      UberTask.run(retry_count: 3) do
-        if run_count < 2
-          run_count += 1
-          UberTask.retry(wait: 1)
+        UberTask.run do
+          UberTask.on_success do
+            on_success_called = true
+          end
         end
-      end
 
-      expect(run_count).to be(2)
+        expect(on_success_called).to be(true)
+      end
+    end
+
+    context 'when task fails' do
+      it 'does not trigger .on_success hook' do
+        on_success_called = false
+
+        UberTask.run do
+          UberTask.on_success do
+            on_success_called = true
+          end
+
+          raise 'error'
+        end
+      rescue StandardError
+        expect(on_success_called).to be(false)
+      end
     end
   end
 end
