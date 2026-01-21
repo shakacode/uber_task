@@ -3,7 +3,7 @@
 desc <<~DESC
   Release the gem with the given version.
 
-  This task depends on the gem-release gem which is installed via `gem install gem-release`.
+  This task depends on the gem-release gem (included in development dependencies).
 
   Arguments:
     version: Can be 'patch', 'minor', 'major', or an explicit version (e.g., '0.2.0' or '0.2.0.beta.1')
@@ -44,7 +44,7 @@ task :release, %i[version dry_run] do |_t, args|
 
       puts "Command failed (attempt #{retries}/#{max_retries}). Retrying..."
       if command.include?('gem push') || command.include?('gem release')
-        puts 'Enter new RubyGems OTP if needed:'
+        puts 'If this was an OTP issue, enter new RubyGems OTP:'
       end
     end
   end
@@ -67,24 +67,11 @@ task :release, %i[version dry_run] do |_t, args|
   log 'Pulling latest changes...', force: true
   sh_with_retry('git pull --rebase')
 
-  # Determine version bump type
-  bump_type = case version
-              when 'patch', 'minor', 'major'
-                version
-              end
-
   # Bump version using gem-release
   log 'Bumping gem version...', force: true
-  bump_command = if bump_type
-                   "gem bump --version #{bump_type} --no-commit"
-                 else
-                   "gem bump --version #{version} --no-commit"
-                 end
-  sh_with_retry(bump_command)
+  sh_with_retry("gem bump --version #{version} --no-commit")
 
-  # Get the new version
-  require_relative '../lib/uber_task/version'
-  # Force reload of version file
+  # Get the new version by loading the updated version file
   load File.join(gem_root, 'lib', 'uber_task', 'version.rb')
   new_version = UberTask::VERSION
 
@@ -124,7 +111,6 @@ task :release, %i[version dry_run] do |_t, args|
   log '=' * 80, force: true
   log '', force: true
   log 'Next steps:', force: true
-  log '  1. Update CHANGELOG.md with release notes', force: true
   github_url = 'https://github.com/shakacode/uber_task/releases/new'
-  log "  2. Create a GitHub release at #{github_url}", force: true
+  log "  1. Create a GitHub release at #{github_url}", force: true
 end

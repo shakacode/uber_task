@@ -112,8 +112,12 @@ lefthook install
 
 Releases are managed by project maintainers. See `rakelib/release.rake` for the release process.
 
+**Before releasing**, ensure the CHANGELOG.md is updated:
+1. Move items from "Unreleased" to a new version section
+2. Add the release date to the new version heading
+
 The release task handles:
-- Version bumping
+- Version bumping (via `gem-release`, included in dev dependencies)
 - Git tagging
 - Gem publishing to RubyGems
 
@@ -121,17 +125,17 @@ To create a release (maintainers only):
 
 ```bash
 # Bump patch version and release
-rake release[patch]
+bundle exec rake release[patch]
 
 # Bump minor version and release
-rake release[minor]
+bundle exec rake release[minor]
 
 # Bump major version and release
-rake release[major]
+bundle exec rake release[major]
 
 # Set explicit version and release
-rake release[0.2.0]
+bundle exec rake release[0.2.0]
 
 # Dry run (no actual release)
-rake release[patch,true]
+bundle exec rake release[patch,true]
 ```
