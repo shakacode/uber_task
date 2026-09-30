@@ -13,6 +13,23 @@ RSpec.describe UberTaskRelease::Workflow do
 
   before { workflow.instance_variable_set(:@head, head) }
 
+  [SocketError, OpenSSL::SSL::SSLError].each do |network_error|
+    it "reports completed steps after #{network_error} during verification" do
+      allow(workflow).to receive(:preflight)
+      allow(workflow).to receive(:isolated).and_yield(Dir.pwd)
+      allow(workflow).to receive(:plan).and_return(['1.0.0', '', false])
+      allow(workflow).to receive(:build).and_return('artifact.gem')
+      allow(workflow).to receive(:finish) do
+        workflow.instance_variable_get(:@completed) << 'tag v1.0.0 pushed'
+        workflow.rubygems_metadata('1.0.0')
+      end
+      allow(Net::HTTP).to receive(:start).and_raise(network_error)
+      expect { workflow.release('1.0.0') }
+        .to raise_error(UberTaskRelease::Error,
+                        /Cannot establish.*Completed: tag v1.0.0 pushed/m)
+    end
+  end
+
   describe 'preflight' do
     it 'refuses dirty callers before checking remote services' do
       allow(workflow).to receive(:git).with('status', '--porcelain')

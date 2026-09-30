@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require 'net/http'
+require 'openssl'
 require 'io/console'
 require 'tempfile'
 
@@ -82,7 +83,8 @@ module UberTaskRelease
               "RubyGems lookup failed (HTTP #{response.code})"
       end
       JSON.parse(response.body)
-    rescue IOError, SystemCallError, Timeout::Error, JSON::ParserError => err
+    rescue IOError, SystemCallError, Timeout::Error, JSON::ParserError,
+           SocketError, OpenSSL::SSL::SSLError => err
       raise Error, "Cannot establish RubyGems publication state: #{err.class}"
     end
 
