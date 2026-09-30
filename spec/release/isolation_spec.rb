@@ -118,7 +118,7 @@ RSpec.describe 'Release isolation' do
           expect { release.release('patch', dry_run: true) }
             .to raise_error(UberTaskRelease::Error, /fixture build failed/)
         else
-          release.release('patch', dry_run: true)
+          release.release('', dry_run: true)
           expect(output.string).to include('0.1.1 built in isolation')
         end
         expect(snapshot(root, remote)).to eq(before)

@@ -147,17 +147,17 @@ RSpec.describe UberTaskRelease::Workflow do
       end
     end
 
-    it 'uses a fresh OTP in argument arrays after recoverable failure' do
+    it 'keeps refreshed OTPs out of command arguments' do
       workflow.instance_variable_set(:@otp, '123456')
       workflow.instance_variable_set(:@input, StringIO.new("654321\n"))
       allow(workflow).to receive(:published?).and_return(false, false, true)
       expect(workflow).to receive(:capture).with(
         'gem', 'push', 'artifact.gem', '--host', 'https://rubygems.org',
-        '--otp', '123456', root: Dir.pwd
+        root: Dir.pwd, env: { 'GEM_HOST_OTP_CODE' => '123456' }
       ).ordered.and_return(['', 'Invalid OTP', failure])
       expect(workflow).to receive(:capture).with(
         'gem', 'push', 'artifact.gem', '--host', 'https://rubygems.org',
-        '--otp', '654321', root: Dir.pwd
+        root: Dir.pwd, env: { 'GEM_HOST_OTP_CODE' => '654321' }
       ).ordered.and_return(['ok', '', success])
       workflow.publish_gem(Dir.pwd, '1.0.0', 'artifact.gem')
       expect(output.string).not_to include('123456', '654321')

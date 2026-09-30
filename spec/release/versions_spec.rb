@@ -38,6 +38,26 @@ RSpec.describe UberTaskRelease::Versions do
       .to eq('1.0.0.rc.1')
   end
 
+  it 'uses new Unreleased notes after the current version has been tagged' do
+    changelog = "#{notes}### [0.1.0]\n\n- Released notes.\n"
+    expect(described_class.resolve('', '0.1.0', changelog,
+                                   tags: ['v0.1.0'])).to eq('0.1.1')
+  end
+
+  it 'prefers a newer prepared section even with pending Unreleased notes' do
+    changelog = "#{notes}### [0.2.0]\n\n- Prepared notes.\n"
+    expect(described_class.resolve('', '0.1.0', changelog,
+                                   tags: ['v0.1.0'])).to eq('0.2.0')
+  end
+
+  it 'does not promote a tagged prerelease with new Unreleased notes' do
+    changelog = "#{notes}### [1.0.0.rc.0]\n\n- Released notes.\n"
+    expect do
+      described_class.resolve('', '1.0.0.rc.0', changelog,
+                              tags: ['v1.0.0.rc.0'])
+    end.to raise_error(UberTaskRelease::Error, /explicit version/)
+  end
+
   it 'uses patch fallback only for a stable version' do
     expect(described_class.resolve('', '0.1.0', notes)).to eq('0.1.1')
     expect(described_class.resolve('minor', '1.0.0.rc.0', notes)).to eq('1.1.0')

@@ -40,17 +40,22 @@ module UberTaskRelease
       notes && !notes.gsub(/^#+[^\n]*|_Nothing yet\._/, '').strip.empty?
     end
 
-    def default_input(current, changelog)
+    def default_input(current, changelog, tags)
       prepared = changelog.scan(/^### \[([^\]]+)\]/).flatten
                           .find { |value| value != 'Unreleased' }
       return 'patch' unless prepared
       version = normalize(prepared)
+      return version if Gem::Version.new(version) > Gem::Version.new(current)
+      if tags.include?("v#{current}") &&
+         substantive?(section(changelog, 'Unreleased'))
+        return 'patch'
+      end
       Gem::Version.new(version) >= Gem::Version.new(current) ? version : 'patch'
     end
 
-    def resolve(requested, current, changelog)
+    def resolve(requested, current, changelog, tags: [])
       input = requested.to_s.strip
-      input = default_input(current, changelog) if input.empty?
+      input = default_input(current, changelog, tags) if input.empty?
       return normalize(input) unless %w[patch minor major].include?(input)
       bump(input, current)
     end

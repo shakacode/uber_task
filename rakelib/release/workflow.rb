@@ -107,13 +107,14 @@ module UberTaskRelease
     def plan(root, requested, override)
       current = Versions.current(File.read(File.join(root, VERSION_FILE)))
       changelog = File.read(File.join(root, 'CHANGELOG.md'))
-      version = Versions.resolve(requested, current, changelog)
+      tags = git('tag', '-l', root: root).lines.map(&:strip)
+      version = Versions.resolve(requested, current, changelog, tags: tags)
       if Gem::Version.new(version) < Gem::Version.new(current)
         raise Error, 'A release cannot downgrade the checkout version'
       end
       prepared = Versions.prepare(changelog, version)
       Versions.validate!(
-        version, git('tag', '-l', root: root).lines.map(&:strip),
+        version, tags,
         Versions.section(prepared, version), override: override, output: @output
       )
       branch_allowed!(version)

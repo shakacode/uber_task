@@ -137,8 +137,10 @@ module UberTaskRelease
       return if published?(version, artifact)
       max_retries.times do |attempt|
         otp!(fresh: attempt.positive?)
-        out, err, status = capture('gem', 'push', artifact, '--host', 'https://rubygems.org',
-                                   '--otp', @otp, root: root)
+        environment = { 'GEM_HOST_OTP_CODE' => @otp }
+        out, err, status = capture('gem', 'push', artifact, '--host',
+                                   'https://rubygems.org', root: root,
+                                                           env: environment)
         return true if published?(version, artifact)
         recoverable = recoverable_failure?("#{out}\n#{err}")
         unless !status.success? && recoverable && attempt + 1 < max_retries

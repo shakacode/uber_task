@@ -29,8 +29,9 @@ Merge the preparation PR through the repository's normal review requirements.
 No tag, gem, or GitHub release is published during preparation.
 
 With no argument, the latest versioned changelog section supplies the version
-when it is current or newer. Otherwise a stable current version falls back to a
-patch bump using meaningful Unreleased notes. A prerelease never silently becomes
+when it is newer, or current with no new Unreleased notes after tagging. A tagged
+current version with meaningful Unreleased notes falls back to a patch bump,
+as does an older or absent versioned section. A prerelease never silently becomes
 stable through patch fallback: specify the target explicitly. `patch`, `minor`,
 and `major` are supported; versions use RubyGems syntax, such as `1.0.0.rc.1`.
 RubyGems normalizes hyphen prereleases; all tags use `v` plus the normalized version.
@@ -73,8 +74,8 @@ the changelog **at that tag**. Prerelease state follows the RubyGems version.
 Existing local/remote tags pointing to another commit are never overwritten.
 
 RubyGems MFA remains required. Supply `RUBYGEMS_OTP` or enter an OTP when prompted
-(terminal input is hidden). OTPs are passed as subprocess arguments, never shell
-strings or log text. Only OTP/MFA and recognized transient publication failures
+(terminal input is hidden). OTPs use the RubyGems subprocess environment instead
+of command arguments, shell strings, or log text. Only OTP/MFA and recognized transient publication failures
 can retry, with a fresh OTP; `GEM_RELEASE_MAX_RETRIES` must be 1–3. Git and GitHub
 mutations do not retry automatically.
 
