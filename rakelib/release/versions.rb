@@ -32,8 +32,20 @@ module UberTaskRelease
     end
 
     def section(changelog, version)
-      pattern = /^### \[#{Regexp.escape(version)}\][^\n]*\n(.*?)(?=^### \[|\z)/m
-      changelog.match(pattern)&.[](1)&.strip
+      pattern = /^### \[([^\]]+)\][^\n]*\n(.*?)(?=^### \[|\z)/m
+      changelog.scan(pattern).each do |heading, notes|
+        next unless same_section?(heading, version)
+        return notes.gsub(/^Changes since the last non-beta release\.\n?/, '')
+                    .strip
+      end
+      nil
+    end
+
+    def same_section?(heading, version)
+      return heading == version if [heading, version].include?('Unreleased')
+      normalize(heading) == normalize(version)
+    rescue Error
+      false
     end
 
     def substantive?(notes)

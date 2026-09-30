@@ -82,6 +82,27 @@ RSpec.describe UberTaskRelease::Versions do
     end
   end
 
+  it 'does not count the existing Unreleased template sentence as notes' do
+    changelog = "### [Unreleased]\n\n" \
+                "Changes since the last non-beta release.\n\n_Nothing yet._\n"
+    expect { described_class.prepare(changelog, '0.1.1') }
+      .to raise_error(UberTaskRelease::Error, /meaningful/)
+    prepared = described_class.prepare(
+      changelog.sub('_Nothing yet._', '- Actual release note.'), '0.1.1'
+    )
+    expect(prepared).not_to include('Changes since the last non-beta release.')
+  end
+
+  it 'matches hyphen prerelease headings to normalized versions' do
+    changelog = "### [Unreleased]\n\n_Nothing yet._\n\n" \
+                "### [1.0.0-rc.1]\n\n- Prepared prerelease.\n"
+    version = described_class.resolve('', '1.0.0.pre.rc.0', changelog)
+    expect(version).to eq('1.0.0.pre.rc.1')
+    expect(described_class.prepare(changelog, version)).to eq(changelog)
+    expect(described_class.section(changelog, version))
+      .to eq('- Prepared prerelease.')
+  end
+
   it 'blocks old versions even when the policy override is enabled' do
     expect do
       described_class.validate!(
