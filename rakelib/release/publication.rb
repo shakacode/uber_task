@@ -7,13 +7,17 @@ require 'tempfile'
 
 module UberTaskRelease
   module Publication
+    CI_WORKFLOWS = { 'RSpec' => '.github/workflows/rspec.yml',
+                     'Rubocop' => '.github/workflows/rubocop.yml' }.freeze
+
     def ci_passed!(root)
       endpoint = "repos/#{Workflow::REPOSITORY}/commits/#{@head}/check-runs"
       pages = JSON.parse(run('gh', 'api', '--paginate', '--slurp',
                              endpoint, root: root))
       checks = pages.flat_map { |page| page.fetch('check_runs') }
-      %w[RSpec Rubocop].each do |name|
-        candidates = checks.select { |entry| release_check?(entry, name) }
+      runs = {}
+      CI_WORKFLOWS.each do |name, path|
+        candidates = workflow_checks(root, checks, name, path, runs)
         check = candidates.max_by { |entry| entry.fetch('id') }
         next if successful_check?(check)
         raise Error,
@@ -22,6 +26,27 @@ module UberTaskRelease
       end
     rescue JSON::ParserError, KeyError => err
       raise Error, "Cannot establish release CI: #{err.class}"
+    end
+
+    def workflow_checks(root, checks, name, path, runs)
+      checks.select do |entry|
+        release_check?(entry, name) &&
+          intended_workflow?(root, entry, path, runs)
+      end
+    end
+
+    def intended_workflow?(root, entry, path, runs)
+      repository = Regexp.escape(Workflow::REPOSITORY)
+      pattern = %r{\Ahttps://github\.com/#{repository}/actions/runs/(\d+)/job/\d+\z}
+      match = entry['details_url'].to_s.match(pattern)
+      return false unless match
+      id = match[1]
+      runs[id] ||= JSON.parse(run('gh', 'api',
+                                  "repos/#{Workflow::REPOSITORY}/actions/runs/#{id}",
+                                  root: root))
+      actual = runs[id]
+      actual['path'] == path && actual['head_sha'] == @head &&
+        actual['head_branch'] == @branch && actual['event'] == 'push'
     end
 
     def successful_check?(check)

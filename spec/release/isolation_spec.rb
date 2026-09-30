@@ -44,7 +44,14 @@ class FixtureRelease < UberTaskRelease::Workflow
       if fail_build && args[3] == 'build'
         raise UberTaskRelease::Error, 'fixture build failed'
       end
-      run(*args.drop(2), root: root, env: env)
+      plugin = File.join(Gem::Specification.find_by_name('gem-release')
+                                          .full_gem_path,
+                         'lib/rubygems_plugin.rb')
+      environment = env.merge('GEM_HOME' => File.join(root, 'empty-gems'),
+                              'GEM_PATH' => File.join(root, 'empty-gems'))
+      run(Gem.ruby, '-r', plugin, '-rrubygems/gem_runner', '-e',
+          'Gem::GemRunner.new.run(ARGV)', '--', *args.drop(3), root: root,
+                                                               env: environment)
     end
     ''
   end
@@ -110,6 +117,7 @@ RSpec.describe 'Release isolation' do
     it "preserves caller and remote state on #{outcome}" do
       Dir.mktmpdir do |directory|
         root, remote = project(directory)
+        git(root, 'tag', 'v9.0.0')
         before = snapshot(root, remote)
         output = StringIO.new
         release = FixtureRelease.new(root: root, output: output)

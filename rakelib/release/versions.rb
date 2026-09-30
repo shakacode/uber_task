@@ -94,8 +94,10 @@ module UberTaskRelease
         raise Error, "Add meaningful Unreleased or #{version} notes"
       end
       pattern = /^### \[Unreleased\][^\n]*\n.*?(?=^### \[|\z)/m
-      changelog.sub(pattern, "### [Unreleased]\n\n_Nothing yet._\n\n" \
-                             "### [#{version}]\n\n#{notes}\n\n")
+      changelog.sub(pattern) do
+        "### [Unreleased]\n\n_Nothing yet._\n\n" \
+          "### [#{version}]\n\n#{notes}\n\n"
+      end
     end
 
     def validate!(version, tags, notes, override:, output:)

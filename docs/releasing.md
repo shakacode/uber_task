@@ -63,7 +63,8 @@ Stable publication requires `main`. Prereleases may use `main` or an existing
 `release/*` destination branch; merge preparation into that branch first.
 Preparation branches and arbitrary feature branches cannot publish. The selected
 commit must match the live remote branch. Both official GitHub Actions checks
-named `RSpec` and `Rubocop` must succeed on that exact commit. Missing, pending,
+named `RSpec` and `Rubocop` must succeed on that exact commit, from the repository's
+test/lint workflow files triggered by a push to the destination branch. Missing, pending,
 failed, cancelled, skipped, stale, or impersonated checks block publication.
 There is no CI override. After any new commit or refresh, rerun and wait for that
 commit's checks; earlier green checks do not carry forward.

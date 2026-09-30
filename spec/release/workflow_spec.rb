@@ -11,7 +11,10 @@ RSpec.describe UberTaskRelease::Workflow do
   let(:success) { instance_double(Process::Status, success?: true) }
   let(:failure) { instance_double(Process::Status, success?: false) }
 
-  before { workflow.instance_variable_set(:@head, head) }
+  before do
+    workflow.instance_variable_set(:@head, head)
+    workflow.instance_variable_set(:@branch, 'main')
+  end
 
   [SocketError, OpenSSL::SSL::SSLError].each do |network_error|
     it "reports completed steps after #{network_error} during verification" do
@@ -53,7 +56,9 @@ RSpec.describe UberTaskRelease::Workflow do
   def checks(conclusion: 'success', sha: head, app: 'github-actions')
     %w[RSpec Rubocop].map.with_index do |name, index|
       { 'name' => name, 'head_sha' => sha, 'app' => { 'slug' => app },
-        'status' => 'completed', 'conclusion' => conclusion, 'id' => index }
+        'status' => 'completed', 'conclusion' => conclusion, 'id' => index,
+        'details_url' => 'https://github.com/shakacode/uber_task/actions/' \
+                         "runs/#{index + 100}/job/#{index + 200}" }
     end
   end
 
@@ -63,6 +68,29 @@ RSpec.describe UberTaskRelease::Workflow do
         'gh', 'api', '--paginate', '--slurp',
         "repos/shakacode/uber_task/commits/#{head}/check-runs", root: Dir.pwd
       ).and_return(JSON.generate([{ 'check_runs' => entries }]))
+      described_class::CI_WORKFLOWS.values.each_with_index do |path, index|
+        response = { 'path' => path, 'head_sha' => head,
+                     'head_branch' => 'main', 'event' => 'push' }
+        allow(workflow).to receive(:run).with(
+          'gh', 'api', "repos/shakacode/uber_task/actions/runs/#{index + 100}",
+          root: Dir.pwd
+        ).and_return(JSON.generate(response))
+      end
+    end
+
+    %w[path head_sha head_branch event].each do |field|
+      it "rejects a workflow run with a different #{field}" do
+        ci_response(checks)
+        response = { 'path' => '.github/workflows/rspec.yml',
+                     'head_sha' => head, 'head_branch' => 'main',
+                     'event' => 'push', field => 'other' }
+        allow(workflow).to receive(:run).with(
+          'gh', 'api', 'repos/shakacode/uber_task/actions/runs/100',
+          root: Dir.pwd
+        ).and_return(JSON.generate(response))
+        expect { workflow.ci_passed!(Dir.pwd) }
+          .to raise_error(UberTaskRelease::Error, /RSpec must pass/)
+      end
     end
 
     it 'requires both official workflow checks' do

@@ -82,6 +82,10 @@ module UberTaskRelease
         checkout = File.join(directory, 'checkout')
         git('clone', '--quiet', '--no-hardlinks', '--no-local', @root, checkout)
         git('remote', 'set-url', 'origin', @remote, root: checkout)
+        git('for-each-ref', '--format=%(refname)', 'refs/tags',
+            root: checkout).lines.each do |ref|
+          git('update-ref', '-d', ref.strip, root: checkout)
+        end
         git('fetch', '--quiet', '--tags', 'origin', @branch, root: checkout)
         lock = File.join(@root, 'Gemfile.lock')
         FileUtils.cp(lock, checkout) if File.file?(lock)

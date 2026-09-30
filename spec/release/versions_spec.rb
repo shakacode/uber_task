@@ -75,6 +75,13 @@ RSpec.describe UberTaskRelease::Versions do
                                    '0.1.0')).to eq('- Original notes.')
   end
 
+  it 'preserves literal backslashes while moving release notes' do
+    literal = '- Document regex `\\1` and replacement `\\&`.'
+    changelog = "### [Unreleased]\n\n#{literal}\n"
+    prepared = described_class.prepare(changelog, '0.1.1')
+    expect(described_class.section(prepared, '0.1.1')).to eq(literal)
+  end
+
   it 'refuses missing and empty release notes' do
     ['', "### [0.1.1]\n\n_Nothing yet._\n"].each do |changelog|
       expect { described_class.prepare(changelog, '0.1.1') }
