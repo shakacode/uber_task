@@ -61,7 +61,7 @@ module UberTask
       end
     rescue SkipTask => err
       execute_handler(:skip, err.reason)
-    # rubocop:disable Lint/RescueException
+    # rubocop:disable-next Lint/RescueException
     rescue Exception => err
       parent_asked_to_retry = false
 
@@ -88,7 +88,6 @@ module UberTask
 
       # None of the parents asked to retry or skip the task.
       raise err
-    # rubocop:enable Lint/RescueException
     ensure
       exit_task
     end

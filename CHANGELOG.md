@@ -12,7 +12,10 @@ Please follow the recommendations outlined at [keepachangelog.com](http://keepac
 
 Changes since the last non-beta release.
 
-_Nothing yet._
+#### Added
+
+- Ruby-only release preparation through a PR, isolated dry runs, exact-commit CI
+  gates, and repeatable GitHub release notes recovery.
 
 ### [0.1.0] - 2022-06-16
 

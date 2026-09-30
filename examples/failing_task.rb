@@ -4,7 +4,8 @@ require 'uber_task'
 
 module Examples
   class FailingTask
-    Error = Class.new(StandardError)
+    class Error < StandardError
+    end
 
     def self.run(**task_options)
       UberTask.run('Failing task', **task_options) do
