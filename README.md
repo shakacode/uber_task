@@ -261,6 +261,11 @@ You can find examples of gem usage at `examples/` folder:
 ruby examples/download_and_move_file.rb
 ```
 
+## Releasing
+
+See [Release UberTask](docs/releasing.md) for preparation PRs, stable and
+prerelease publication, isolated dry runs, and recovery.
+
 ## License
 
 The gem is available as open source under the terms of the
