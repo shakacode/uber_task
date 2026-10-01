@@ -33,6 +33,29 @@ RSpec.describe UberTaskRelease::Workflow do
     end
   end
 
+  describe 'subprocess output under a non-UTF-8 locale' do
+    # A C/POSIX locale tags captured bytes US-ASCII; gh prints a check mark.
+    def locale_bytes(text)
+      text.dup.force_encoding(Encoding::US_ASCII)
+    end
+
+    it 'returns the UTF-8 text of a successful command' do
+      allow(Open3).to receive(:capture3).and_return(
+        [locale_bytes("✓ Logged in\n"), locale_bytes(''), success],
+      )
+      expect(workflow.run('gh', 'auth', 'status')).to eq('✓ Logged in')
+    end
+
+    it 'reports a failed command with its output' do
+      allow(Open3).to receive(:capture3).and_return(
+        [locale_bytes('✗ stdout'), locale_bytes('✗ stderr'), failure],
+      )
+      expect { workflow.run('gh', 'auth', 'status') }.to raise_error(
+        UberTaskRelease::Error, "gh failed: ✗ stdout\n✗ stderr"
+      )
+    end
+  end
+
   describe 'preflight' do
     it 'refuses dirty callers before checking remote services' do
       allow(workflow).to receive(:git).with('status', '--porcelain')

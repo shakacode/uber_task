@@ -64,7 +64,7 @@ RSpec.describe 'Release isolation' do
     out.strip
   end
 
-  def project(directory)
+  def project(directory, note: 'Fix a demonstrated failure.')
     root = File.join(directory, 'caller')
     FileUtils.mkdir_p(File.join(root, 'lib/uber_task'))
     File.write(File.join(root, 'lib/uber_task/version.rb'),
@@ -84,7 +84,7 @@ RSpec.describe 'Release isolation' do
 
       #### Fixed
 
-      - Fix a demonstrated failure.
+      - #{note}
 
       ### [0.1.0]
 
@@ -153,6 +153,23 @@ RSpec.describe 'Release isolation' do
       pushes = release.commands.select { |args| args.first(2) == %w[git push] }
       expect(pushes).to eq([['git', 'push', 'origin', "HEAD:#{branch}"]])
     end
+  end
+
+  it 'prepares UTF-8 release notes under a non-UTF-8 locale' do
+    note = 'Fix café — a demonstrated failure.'
+    locale = Encoding.default_external
+    Dir.mktmpdir do |directory|
+      root, remote = project(directory, note: note)
+      Encoding.default_external = Encoding::US_ASCII
+      FixtureRelease.new(root: root, output: StringIO.new).release('patch')
+      prepared, = Open3.capture2(
+        'git', '-C', remote, 'show', 'prepare-release/v0.1.1:CHANGELOG.md',
+        binmode: true
+      )
+      expect(prepared).to include("### [0.1.1]\n\n#### Fixed\n\n- #{note}".b)
+    end
+  ensure
+    Encoding.default_external = locale
   end
 
   it 'reports a pushed preparation branch when PR creation fails' do

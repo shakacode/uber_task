@@ -29,10 +29,23 @@ module UberTaskRelease
       Bundler.with_unbundled_env do
         environment = { 'BUNDLE_GEMFILE' => File.join(root,
                                                       'Gemfile') }.merge(env)
-        Open3.capture3(environment, *args, chdir: root)
+        out, err, status = Open3.capture3(environment, *args, chdir: root)
+        [utf8(out), utf8(err), status]
       end
     rescue SystemCallError => err
       raise Error, "Cannot run #{args.first}: #{err.class}"
+    end
+
+    # Git, gh and the release files are UTF-8 whatever the caller's locale;
+    # a C locale would tag their bytes US-ASCII and break string handling.
+    def utf8(text)
+      text.dup.force_encoding(Encoding::UTF_8).scrub
+    end
+
+    def read(root, path)
+      text = File.read(File.join(root, path), encoding: Encoding::UTF_8)
+      raise Error, "#{path} is not valid UTF-8" unless text.valid_encoding?
+      text
     end
 
     def run(*args, root: @root, env: {})
@@ -109,8 +122,8 @@ module UberTaskRelease
     end
 
     def plan(root, requested, override)
-      current = Versions.current(File.read(File.join(root, VERSION_FILE)))
-      changelog = File.read(File.join(root, 'CHANGELOG.md'))
+      current = Versions.current(read(root, VERSION_FILE))
+      changelog = read(root, 'CHANGELOG.md')
       tags = git('tag', '-l', root: root).lines.map(&:strip)
       version = Versions.resolve(requested, current, changelog, tags: tags)
       if Gem::Version.new(version) < Gem::Version.new(current)
@@ -131,11 +144,11 @@ module UberTaskRelease
       git('switch', '-c', "prepare-release/v#{version}", root: root)
       run('bundle', 'exec', 'gem', 'bump', '--version', version,
           '--no-commit', root: root)
-      actual = Versions.current(File.read(File.join(root, VERSION_FILE)))
+      actual = Versions.current(read(root, VERSION_FILE))
       unless actual == version
         raise Error, 'gem-release did not produce the requested version'
       end
-      File.write(File.join(root, 'CHANGELOG.md'), changelog)
+      File.binwrite(File.join(root, 'CHANGELOG.md'), changelog)
       run('bundle', 'install', root: root)
     end
 
