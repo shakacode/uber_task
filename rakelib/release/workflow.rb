@@ -51,15 +51,18 @@ module UberTaskRelease
     def run(*args, root: @root, env: {})
       out, err, status = capture(*args, root: root, env: env)
       unless status.success?
-        message = "#{args.first} failed: #{out}\n#{err}"
-        [@otp,
-         ENV.fetch('RUBYGEMS_OTP',
-                   nil)].compact.reject(&:empty?).each do |secret|
-          message = message.gsub(secret, '[REDACTED]')
-        end
-        raise Error, message.strip
+        raise Error, redact("#{args.first} failed: #{out}\n#{err}")
       end
       out.strip
+    end
+
+    def redact(message)
+      secrets = [@otp, ENV.fetch('RUBYGEMS_OTP', nil),
+                 ENV.fetch('GEM_HOST_API_KEY', nil)]
+      secrets.compact.reject(&:empty?).each do |secret|
+        message = message.gsub(secret, '[REDACTED]')
+      end
+      message.strip
     end
 
     def git(*args, root: @root)

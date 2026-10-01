@@ -231,14 +231,17 @@ RSpec.describe UberTaskRelease::Workflow do
       expect(output.string).not_to include('123456', '654321')
     end
 
-    it 'does not retry unrelated errors or expose the command output' do
+    it 'does not retry unrelated errors and reports their redacted output' do
       workflow.instance_variable_set(:@otp, '123456')
       allow(workflow).to receive(:published?).and_return(false)
       expect(workflow).to receive(:capture).once.and_return(
         ['', 'API key denied: 123456', failure],
       )
       expect { workflow.publish_gem(Dir.pwd, '1.0.0', 'artifact.gem') }
-        .to raise_error(UberTaskRelease::Error, /output withheld/)
+        .to raise_error(UberTaskRelease::Error) do |error|
+          expect(error.message).to include('API key denied: [REDACTED]')
+          expect(error.message).not_to include('123456')
+        end
     end
 
     it 'does not duplicate a push when a failed response actually published' do
@@ -272,7 +275,58 @@ RSpec.describe UberTaskRelease::Workflow do
                                            .and_return(['', 'Invalid OTP',
                                                         failure])
       expect { workflow.publish_gem(Dir.pwd, '1.0.0', 'unused') }
-        .to raise_error(UberTaskRelease::Error, /output withheld/)
+        .to raise_error(UberTaskRelease::Error, /did not verify/)
+    end
+  end
+
+  describe 'RubyGems credentials' do
+    around do |example|
+      previous = ENV.delete('GEM_HOST_API_KEY')
+      example.run
+    ensure
+      ENV['GEM_HOST_API_KEY'] = previous if previous
+    end
+
+    def stored_keys(default: nil, **keys)
+      allow(Gem.configuration).to receive_messages(
+        api_keys: keys.transform_keys(&:to_s), rubygems_api_key: default,
+      )
+    end
+
+    it 'accepts the key gem push would use' do
+      stored_keys(default: 'default key')
+      expect { workflow.rubygems_credentials! }.not_to raise_error
+      stored_keys('https://rubygems.org': 'host key')
+      expect { workflow.rubygems_credentials! }.not_to raise_error
+      stored_keys
+      ENV['GEM_HOST_API_KEY'] = 'from-environment'
+      expect { workflow.rubygems_credentials! }.not_to raise_error
+    end
+
+    it 'refuses a key that gem push would not select' do
+      stored_keys(release: 'named key', 'https://example.test': 'other host')
+      expect { workflow.rubygems_credentials! }
+        .to raise_error(UberTaskRelease::Error, /GEM_HOST_API_KEY/)
+    end
+
+    it 'reports an unusable credentials file as a release error' do
+      allow(Gem.configuration).to receive(:api_keys)
+        .and_raise(Gem::SystemExitException.new(1))
+      expect { workflow.rubygems_credentials! }
+        .to raise_error(UberTaskRelease::Error, /unusable/)
+    end
+
+    it 'stops before tagging when credentials are missing' do
+      stored_keys
+      allow(workflow).to receive(:git).with('rev-parse', 'HEAD', root: Dir.pwd)
+                                      .and_return(head)
+      allow(workflow).to receive(:remote_head!)
+      allow(workflow).to receive(:ci_passed!)
+      allow(workflow).to receive(:remote_tag!)
+      allow(workflow).to receive(:published?).and_return(false)
+      expect(workflow).not_to receive(:publish_gem)
+      expect { workflow.publish(Dir.pwd, '1.0.0', 'unused') }
+        .to raise_error(UberTaskRelease::Error, /gem signin/)
     end
   end
 
@@ -340,6 +394,7 @@ RSpec.describe UberTaskRelease::Workflow do
     allow(workflow).to receive(:ci_passed!)
     allow(workflow).to receive(:remote_tag!)
     allow(workflow).to receive(:published?).and_return(false)
+    allow(workflow).to receive(:rubygems_credentials!)
     allow(workflow).to receive(:git).with('rev-parse', 'HEAD', root: Dir.pwd)
                                     .and_return(head)
     allow(workflow).to receive(:git).with('tag', '-l', 'v1.0.0', root: Dir.pwd)

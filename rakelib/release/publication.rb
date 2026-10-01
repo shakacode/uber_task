@@ -9,6 +9,7 @@ module UberTaskRelease
   module Publication
     CI_WORKFLOWS = { 'RSpec' => '.github/workflows/rspec.yml',
                      'Rubocop' => '.github/workflows/rubocop.yml' }.freeze
+    RUBYGEMS_HOST = 'https://rubygems.org'
 
     def ci_passed!(root)
       endpoint = "repos/#{Workflow::REPOSITORY}/commits/#{@head}/check-runs"
@@ -81,7 +82,7 @@ module UberTaskRelease
       remote_head!(root)
       ci_passed!(root)
       remote_tag!(root, version)
-      published?(version, artifact)
+      rubygems_credentials! unless published?(version, artifact)
       tag = "v#{version}"
       if git('tag', '-l', tag, root: root).empty?
         git('tag', '-a', tag, @head, '-m', "UberTask #{version}", root: root)
@@ -128,6 +129,23 @@ module UberTaskRelease
       true
     end
 
+    # Checked before tagging, so a missing key cannot leave a public tag
+    # without its gem. Mirrors gem push without --key: the environment, then
+    # the host's key, then the default key. A named key selected in .gemrc
+    # is not read here; such a setup supplies GEM_HOST_API_KEY instead.
+    def rubygems_credentials!
+      config = Gem.configuration
+      key = ENV.fetch('GEM_HOST_API_KEY') do
+        config.api_keys[RUBYGEMS_HOST] || config.rubygems_api_key
+      end
+      return unless key.to_s.empty?
+      raise Error, "No RubyGems key for #{RUBYGEMS_HOST}; run gem signin " \
+                   'or set GEM_HOST_API_KEY'
+    rescue Gem::SystemExitException
+      raise Error, 'RubyGems credentials are unusable; follow the RubyGems ' \
+                   'message above'
+    end
+
     def max_retries
       count = Integer(ENV.fetch('GEM_RELEASE_MAX_RETRIES', '3'))
       unless (1..3).cover?(count)
@@ -166,14 +184,12 @@ module UberTaskRelease
         otp!(fresh: attempt.positive?)
         environment = { 'GEM_HOST_OTP_CODE' => @otp }
         out, err, status = capture('gem', 'push', artifact, '--host',
-                                   'https://rubygems.org', root: root,
-                                                           env: environment)
+                                   RUBYGEMS_HOST, root: root, env: environment)
         return true if published?(version, artifact)
         recoverable = recoverable_failure?("#{out}\n#{err}")
         unless !status.success? && recoverable && attempt + 1 < max_retries
-          raise Error,
-                'Gem publication did not verify; output withheld to avoid ' \
-                'credential disclosure'
+          raise Error, redact('Gem publication did not verify: ' \
+                              "#{out}\n#{err}")
         end
         @output.puts 'Recoverable publication failure; supply a fresh OTP'
       end
