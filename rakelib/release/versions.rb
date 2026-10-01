@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 
+require 'date'
 require 'rubygems/version'
 
 module UberTaskRelease
@@ -85,7 +86,7 @@ module UberTaskRelease
       parts.first(3).join('.')
     end
 
-    def prepare(changelog, version)
+    def prepare(changelog, version, date: Date.today)
       notes = section(changelog, version)
       return changelog if substantive?(notes)
       raise Error, "Changelog section #{version} is empty" if notes
@@ -96,7 +97,7 @@ module UberTaskRelease
       pattern = /^### \[Unreleased\][^\n]*\n.*?(?=^### \[|\z)/m
       changelog.sub(pattern) do
         "### [Unreleased]\n\n_Nothing yet._\n\n" \
-          "### [#{version}]\n\n#{notes}\n\n"
+          "### [#{version}] - #{date.iso8601}\n\n#{notes}\n\n"
       end
     end
 

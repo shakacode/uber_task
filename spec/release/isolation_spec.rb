@@ -166,7 +166,9 @@ RSpec.describe 'Release isolation' do
         'git', '-C', remote, 'show', 'prepare-release/v0.1.1:CHANGELOG.md',
         binmode: true
       )
-      expect(prepared).to include("### [0.1.1]\n\n#### Fixed\n\n- #{note}".b)
+      expect(prepared.force_encoding(Encoding::UTF_8)).to match(
+        /^### \[0\.1\.1\] - \d{4}-\d\d-\d\d\n\n#### Fixed\n\n- #{note}$/,
+      )
     end
   ensure
     Encoding.default_external = locale

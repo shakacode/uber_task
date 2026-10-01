@@ -65,8 +65,10 @@ RSpec.describe UberTaskRelease::Versions do
   end
 
   it 'moves Unreleased notes while preserving other versions' do
-    changelog = "#{notes}### [0.1.0]\n\n- Original notes.\n"
-    prepared = described_class.prepare(changelog, '0.1.1')
+    changelog = "#{notes}### [0.1.0] - 2022-06-16\n\n- Original notes.\n"
+    prepared = described_class.prepare(changelog, '0.1.1',
+                                       date: Date.new(2026, 9, 30))
+    expect(prepared).to include("\n### [0.1.1] - 2026-09-30\n\n")
     expect(described_class.section(prepared, 'Unreleased'))
       .to eq('_Nothing yet._')
     expect(described_class.section(prepared,
